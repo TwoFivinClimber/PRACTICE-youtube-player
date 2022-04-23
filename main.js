@@ -61,42 +61,44 @@ const videoBtnModal = () => {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="modal-body">
-          <form>
-          <div class="form-floating mb-3">
-            <input class="form-control form-control-lg" type="text" placeholder="Video ID" id="videoId" aria-label="video id" required>
-            <label for="videoId">YouTube Video ID</label>
-          </div>
-      
-          <div class="form-floating mb-3">
-            <input class="form-control form-control-lg" type="text" placeholder="Title" id="title" aria-label="title" required>
-            <label for="title">Title</label>
-          </div>
-      
-          <div class="form-floating mb-3">
-            <select class="form-select form-control-lg" id="category" aria-label="category" required>
-              <option value="">Select a category</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="javascript">JavaScript</option>
-              <option value="music">Music</option>
-            </select>
-            <label for="category">Category</label>
-          </div>
+            <!-- FORM -->
+            <form>
+              <div class="form-floating mb-3">
+                <input class="form-control form-control-lg" type="text" placeholder="Video ID" id="videoId" aria-label="video id" required>
+                <label for="videoId">YouTube Video ID</label>
+              </div>
           
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" value="" id="favorite">
-            <label class="form-check-label" for="favorite">
-              Favorite
-            </label>
-          </div>
-      
-          <button 
-            type="submit" 
-            class="btn btn-success" 
-          >
-            Submit
-          </button>
-        </form>
+              <div class="form-floating mb-3">
+                <input class="form-control form-control-lg" type="text" placeholder="Title" id="title" aria-label="title" required>
+                <label for="title">Title</label>
+              </div>
+          
+              <div class="form-floating mb-3">
+                <select class="form-select form-control-lg" id="category" aria-label="category" required>
+                  <option value="">Select a category</option>
+                  <option value="html">HTML</option>
+                  <option value="css">CSS</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="music">Music</option>
+                </select>
+                <label for="category">Category</label>
+              </div>
+              
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" value="" id="favorite">
+                <label class="form-check-label" for="favorite">
+                  Favorite
+                </label>
+              </div>
+          
+              <button 
+                type="submit" 
+                class="btn btn-success" 
+              >
+                Submit
+              </button>
+            </form>
+          <!-- FORM -->
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ const videoBtnModal = () => {
 
 // Video component with default arg value
 // = 'cNjIUSDnb9k'
-const videoPlayer = (videoId) => {
+const videoPlayer = (videoId = "cNjIUSDnb9k") => {
   const domString = `
   <iframe src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   `;
@@ -116,7 +118,7 @@ const videoPlayer = (videoId) => {
 
 // Filter Button Row
 const filterButtons = () => {
-  let domString = `
+  const domString = `
   <div class="d-flex flex-wrap justify-content-between my-3">
     <button class="btn btn-secondary btn-lg buttonRow" id="music">Music</button>
     <button class="btn btn-secondary btn-lg buttonRow" id="javascript">Javascript</button>
@@ -167,8 +169,23 @@ const eventListeners = () => {
 
   // FILTER BUTTON ROW
   document.querySelector("#filterContainer").addEventListener("click", (e) => {
-    console.log("You clicked a filter button", e.target.id);
+    // console.log("You clicked a filter button", e.target.id);
     // filter on category (either use .filter or a loop)
+    if (e.target.id === "clear") {
+      cardsOnDom(data);
+    } else if (e.target.id === "favorite") {
+      const favs = data.filter((taco) => taco.favorite === true);
+      // const array = [];
+      // for (const taco of data) {
+      //   if (taco.favorite === true) {
+      //     array.push(vid);
+      //   }
+      // }
+      cardsOnDom(favs);
+    } else if (e.target.id) {
+      const topics = data.filter((taco) => taco.category === e.target.id);
+      cardsOnDom(topics);
+    }
     // rerender DOM with new array (use the cardsOnDom function)
   });
 
@@ -177,13 +194,14 @@ const eventListeners = () => {
     // check to make sure e.target.id is not empty
     if (e.target.id) {
       // get the video ID off the button ID
+      const [method, videoId] = e.target.id.split("--"); // destructuring
       // find the index of the object in the array
-
+      const index = data.findIndex((taco) => taco.videoId === videoId);
       // only listen for events with "watch" or "delete" included in the string
 
       // if watch: grab the ID and rerender the videoPlayer with that ID as an argument
       if (e.target.id.includes("watch")) {
-        console.log("Pressed Watch Button");
+        videoPlayer(videoId);
 
         // scroll to top of page
         document.location = "#";
@@ -192,8 +210,9 @@ const eventListeners = () => {
       // if delete: find the index of item in array and splice
       // NOTE: if 2 videos have the same videoId, this will delete the first one in the array
       if (e.target.id.includes("delete")) {
-        console.log("Delete Button Pressed");
+        data.splice(index, 1);
         // rerender DOM with updated data array (use the cardsOnDom function)
+        cardsOnDom(data);
       }
     }
   });
@@ -203,9 +222,16 @@ const eventListeners = () => {
   form.addEventListener("submit", (e) => {
     e.preventDefault(); // this goes in EVERY form submit to prevent page reload
     // grab the values from the form inputs and create an object
+    const newVideoObj = {
+      videoId: document.querySelector("#videoId").value,
+      title: document.querySelector("#title").value,
+      category: document.querySelector("#category").value,
+      favorite: document.querySelector("#favorite").checked,
+    };
     // push that object to the data array
+    data.push(newVideoObj);
     // rerender cards using the cardsOnDom function and pass it the updated data array
-
+    cardsOnDom(data);
     // Close modal and reset form
     formModal.hide();
     form.reset();
